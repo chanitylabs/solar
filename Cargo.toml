@@ -1,6 +1,6 @@
 [package]
 name = "common"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 
 [features]
@@ -11,10 +11,18 @@ price = ["dep:solana-client", "dep:solana-sdk", "dep:spl-token"]
 eyre = { version = "0.6.12" }
 thiserror = "1"
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 lazy_static = { version = "1.5.0" }
 async-trait = "0.1.74"
 tokio = { version = "1", features = ["full"] }
-
+log = { version = "0.4.26", features = ["kv"] }
+chrono = { version = "0.4.26", features = ["serde"] }
+readonly = "0"
+uuid = { version = "1.14.0", features = ["v4", "serde"] }
+aes-gcm = "0.10.1"
+sha2 = "0.10"
+rand = "0.8.5"
+base64 = "0.22.1"
 
 # axum
 axum = { version = "0.8.1", features = ["macros"], optional = true }

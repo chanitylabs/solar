@@ -6,6 +6,7 @@ use solana_sdk::program_pack::Pack;
 use solana_sdk::pubkey::Pubkey;
 use spl_token::state::Account;
 use tokio::sync::RwLock;
+use tokio_util::sync::CancellationToken;
 
 use crate::{
     consts::{SOL_DECIMALS, SOL_USDC_POOL_SOL_VAULT, SOL_USDC_POOL_USDC_VAULT, USDC_DECIMALS},
@@ -67,11 +68,22 @@ impl NativePriceOracle {
         }
     }
 
-    pub async fn run(self: Arc<Self>) -> Result<(), PriceOracleError> {
+    pub async fn run(
+        self: Arc<Self>,
+        cancel_token: CancellationToken,
+    ) -> Result<(), PriceOracleError> {
         let mut interval = tokio::time::interval(self.update_interval);
         let rpc_client = RpcClient::new(self.solana_rpc_url.clone());
 
         loop {
+            tokio::select! {
+                _ = interval.tick() => {}
+                _ = cancel_token.cancelled() => {
+                    log::info!(client = "NativePriceOracle"; "stopped");
+                    return Ok(());
+                }
+            }
+
             interval.tick().await;
             let price = match Self::get_sol_usd_price_native(&rpc_client).await {
                 Ok(price) => price,
@@ -151,7 +163,7 @@ mod tests {
     async fn test_get_sol_usd_price() {
         let builder = NativePriceOracleBuilder::new(RPC_URL, Duration::from_secs(1));
         let oracle = Arc::new(builder.build().await.unwrap());
-        tokio::spawn(oracle.clone().run());
+        tokio::spawn(oracle.clone().run(CancellationToken::new()));
         let price = oracle.get_sol_usd_price().await.unwrap();
         assert!(price > 0.0);
     }

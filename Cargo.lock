@@ -756,6 +756,7 @@ dependencies = [
  "spl-token",
  "thiserror 1.0.69",
  "tokio",
+ "tokio-util",
  "utoipa",
  "uuid",
 ]
@@ -5532,6 +5533,8 @@ dependencies = [
  "bytes",
  "futures-core",
  "futures-sink",
+ "futures-util",
+ "hashbrown 0.14.5",
  "pin-project-lite",
  "tokio",
 ]

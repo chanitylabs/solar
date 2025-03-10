@@ -7,6 +7,11 @@ use solana_sdk::pubkey::Pubkey;
 use spl_token::state::Account;
 use tokio::sync::RwLock;
 
+use crate::{
+    consts::{SOL_DECIMALS, SOL_USDC_POOL_USDC_VAULT, USDC_DECIMALS},
+    tool::parse_bn,
+};
+
 #[derive(thiserror::Error, Debug)]
 pub enum PriceOracleError {
     #[error("internal error: {0:?}")]
@@ -20,62 +25,79 @@ pub trait PriceOracle {
 
 lazy_static::lazy_static! {
     pub static ref USDC_VAULT_ACCOUNT: Pubkey =
-        Pubkey::from_str("HLmqeL62xR1QoZ1HKKbXRrdN1p3phKpxRMb2VVopvBBz").
+        Pubkey::from_str(SOL_USDC_POOL_USDC_VAULT).
             expect("correct USDC vault account");
-    pub static ref USDC_DECIMALS: u8 = 6;
-
     pub static ref SOL_VAULT_ACCOUNT: Pubkey =
-        Pubkey::from_str("DQyrAcCrDXQ7NeoqGgDCZwBvWDcYmFCjSb9JtteuvPpz").
+        Pubkey::from_str(SOL_USDC_POOL_USDC_VAULT).
             expect("correct SOL vault account");
-    pub static ref SOL_DECIMALS: u8 = 9;
 }
 
-#[derive(Clone)]
-pub struct NativePriceOracle {
+pub struct NativePriceOracleBuilder {
     solana_rpc_url: String,
     update_interval: Duration,
-
-    sol_usd_price: Arc<RwLock<f64>>,
 }
 
-impl NativePriceOracle {
+impl NativePriceOracleBuilder {
     pub fn new(solana_rpc_url: impl Into<String>, update_interval: Duration) -> Self {
         Self {
             solana_rpc_url: solana_rpc_url.into(),
             update_interval,
-            sol_usd_price: Arc::new(RwLock::new(0.0)),
         }
     }
 
-    pub async fn run(&self) -> Result<(), PriceOracleError> {
-        let update_interval = self.update_interval;
-        let rpc_url = self.solana_rpc_url.clone();
-        let sol_usd_price = self.sol_usd_price.clone();
-        let rpc_client = RpcClient::new(rpc_url);
+    pub async fn build(self) -> Result<NativePriceOracle, PriceOracleError> {
+        let price_oracle = NativePriceOracle::new(self.solana_rpc_url, self.update_interval);
+        price_oracle.prepare().await?;
+        Ok(price_oracle)
+    }
+}
 
-        {
-            let mut sol_usd_price = sol_usd_price.write().await;
-            let price = Self::get_sol_usd_price_native(&rpc_client)
-                .await
-                .context("failed to get price")?;
+pub struct NativePriceOracle {
+    solana_rpc_url: String,
+    update_interval: Duration,
+    sol_usd_price: RwLock<f64>,
+}
+
+impl NativePriceOracle {
+    fn new(solana_rpc_url: impl Into<String>, update_interval: Duration) -> Self {
+        Self {
+            solana_rpc_url: solana_rpc_url.into(),
+            update_interval,
+            sol_usd_price: RwLock::new(0.0),
+        }
+    }
+
+    pub async fn run(self: Arc<Self>) -> Result<(), PriceOracleError> {
+        let mut interval = tokio::time::interval(self.update_interval);
+        let rpc_client = RpcClient::new(self.solana_rpc_url.clone());
+
+        loop {
+            interval.tick().await;
+            let price = match Self::get_sol_usd_price_native(&rpc_client).await {
+                Ok(price) => price,
+                Err(err) => {
+                    log::error!(client = "NativePriceOracle"; "failed to get price: {err:?}");
+                    continue;
+                }
+            };
+
+            let mut sol_usd_price = self.sol_usd_price.write().await;
             *sol_usd_price = price;
         }
+    }
 
-        tokio::spawn(async move {
-            let mut interval = tokio::time::interval(update_interval);
-            loop {
-                interval.tick().await;
-                let mut sol_usd_price = sol_usd_price.write().await;
-                let price = match Self::get_sol_usd_price_native(&rpc_client).await {
-                    Ok(price) => price,
-                    Err(err) => {
-                        log::error!(client = "NativePriceOracle"; "failed to get price: {err:?}");
-                        continue;
-                    }
-                };
-                *sol_usd_price = price;
-            }
-        });
+    async fn prepare(&self) -> Result<(), PriceOracleError> {
+        let rpc_url = self.solana_rpc_url.clone();
+        let rpc_client = RpcClient::new(rpc_url);
+
+        let price = Self::get_sol_usd_price_native(&rpc_client)
+            .await
+            .context("failed to get price")?;
+
+        {
+            let mut sol_usd_price = self.sol_usd_price.write().await;
+            *sol_usd_price = price;
+        }
 
         Ok(())
     }
@@ -95,10 +117,8 @@ impl NativePriceOracle {
         let usdc_token_account = Account::unpack(&usdc_token_account.data)
             .context("failed to unpack USDC vault account")?;
 
-        let sol_balance = sol_token_account.amount as f64 / 10u64.pow(*SOL_DECIMALS as u32) as f64;
-        let usdc_balance =
-            usdc_token_account.amount as f64 / 10u64.pow(*USDC_DECIMALS as u32) as f64;
-
+        let sol_balance = parse_bn(sol_token_account.amount, SOL_DECIMALS);
+        let usdc_balance = parse_bn(usdc_token_account.amount, USDC_DECIMALS);
         let price = usdc_balance / sol_balance;
 
         Ok(price)
@@ -113,6 +133,14 @@ impl PriceOracle for NativePriceOracle {
     }
 }
 
+#[async_trait::async_trait]
+impl PriceOracle for Arc<NativePriceOracle> {
+    async fn get_sol_usd_price(&self) -> Result<f64, PriceOracleError> {
+        let sol_usd_price = self.sol_usd_price.read().await;
+        Ok(*sol_usd_price)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -121,8 +149,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_sol_usd_price() {
-        let oracle = NativePriceOracle::new(RPC_URL, Duration::from_secs(1));
-        oracle.run().await.unwrap();
+        let oracle = Arc::new(NativePriceOracle::new(RPC_URL, Duration::from_secs(1)));
+        oracle.clone().run().await.unwrap();
         let price = oracle.get_sol_usd_price().await.unwrap();
         assert!(price > 0.0);
     }

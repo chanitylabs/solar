@@ -20,6 +20,6 @@ tokio = { version = "1", features = ["full"] }
 axum = { version = "0.8.1", features = ["macros"], optional = true }
 
 # price
-spl-token = { version = "7", features = ["no-entrypoint"] }
+spl-token = { version = "7", features = ["no-entrypoint"], optional = true }
 solana-client = { version = "2.1.15", optional = true }
 solana-sdk = { version = "2.1.15", optional = true }

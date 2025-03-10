@@ -8,7 +8,7 @@ use spl_token::state::Account;
 use tokio::sync::RwLock;
 
 use crate::{
-    consts::{SOL_DECIMALS, SOL_USDC_POOL_USDC_VAULT, USDC_DECIMALS},
+    consts::{SOL_DECIMALS, SOL_USDC_POOL_SOL_VAULT, SOL_USDC_POOL_USDC_VAULT, USDC_DECIMALS},
     tool::parse_bn,
 };
 
@@ -28,7 +28,7 @@ lazy_static::lazy_static! {
         Pubkey::from_str(SOL_USDC_POOL_USDC_VAULT).
             expect("correct USDC vault account");
     pub static ref SOL_VAULT_ACCOUNT: Pubkey =
-        Pubkey::from_str(SOL_USDC_POOL_USDC_VAULT).
+        Pubkey::from_str(SOL_USDC_POOL_SOL_VAULT).
             expect("correct SOL vault account");
 }
 
@@ -149,8 +149,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_sol_usd_price() {
-        let oracle = Arc::new(NativePriceOracle::new(RPC_URL, Duration::from_secs(1)));
-        oracle.clone().run().await.unwrap();
+        let builder = NativePriceOracleBuilder::new(RPC_URL, Duration::from_secs(1));
+        let oracle = Arc::new(builder.build().await.unwrap());
+        tokio::spawn(oracle.clone().run());
         let price = oracle.get_sol_usd_price().await.unwrap();
         assert!(price > 0.0);
     }

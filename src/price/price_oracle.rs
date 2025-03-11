@@ -1,10 +1,8 @@
-use std::{str::FromStr, sync::Arc, time::Duration};
-
 use eyre::Context;
 use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::program_pack::Pack;
-use solana_sdk::pubkey::Pubkey;
+use solana_sdk::{program_pack::Pack, pubkey::Pubkey};
 use spl_token::state::Account;
+use std::{sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 use tokio_util::sync::CancellationToken;
 
@@ -24,14 +22,8 @@ pub trait PriceOracle {
     async fn get_sol_usd_price(&self) -> Result<f64, PriceOracleError>;
 }
 
-lazy_static::lazy_static! {
-    pub static ref USDC_VAULT_ACCOUNT: Pubkey =
-        Pubkey::from_str(SOL_USDC_POOL_USDC_VAULT).
-            expect("correct USDC vault account");
-    pub static ref SOL_VAULT_ACCOUNT: Pubkey =
-        Pubkey::from_str(SOL_USDC_POOL_SOL_VAULT).
-            expect("correct SOL vault account");
-}
+const SOL_VAULT_ACCOUNT: Pubkey = Pubkey::from_str_const(SOL_USDC_POOL_SOL_VAULT);
+const USDC_VAULT_ACCOUNT: Pubkey = Pubkey::from_str_const(SOL_USDC_POOL_USDC_VAULT);
 
 pub struct NativePriceOracleBuilder {
     solana_rpc_url: String,
@@ -79,7 +71,10 @@ impl NativePriceOracle {
             tokio::select! {
                 _ = interval.tick() => {}
                 _ = cancel_token.cancelled() => {
+
+                    #[cfg(feature = "log")]
                     log::info!(client = "NativePriceOracle"; "stopped");
+
                     return Ok(());
                 }
             }
@@ -87,8 +82,9 @@ impl NativePriceOracle {
             interval.tick().await;
             let price = match Self::get_sol_usd_price_native(&rpc_client).await {
                 Ok(price) => price,
-                Err(err) => {
-                    log::error!(client = "NativePriceOracle"; "failed to get price: {err:?}");
+                Err(_err) => {
+                    #[cfg(feature = "log")]
+                    log::error!(client = "NativePriceOracle"; "failed to get price: {_err:?}");
                     continue;
                 }
             };

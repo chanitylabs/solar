@@ -1,4 +1,6 @@
+#[cfg(feature = "encryptor")]
 use crate::encryptor::{EncryptionConfig, Encryptor};
+
 use eyre::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize, Hash, Copy)]
@@ -120,6 +122,7 @@ impl std::fmt::Display for PrivateKey {
 }
 
 impl PrivateKey {
+    #[cfg(feature = "encryptor")]
     pub fn encrypt(&self, config: &EncryptionConfig) -> Result<PrivateKeyEncrypted> {
         let encryptor = Encryptor::new(config);
         let encrypted = encryptor.encrypt(&self.value)?;
@@ -127,17 +130,20 @@ impl PrivateKey {
     }
 }
 
+#[cfg(feature = "encryptor")]
 #[derive(Debug, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct PrivateKeyEncrypted {
     pub value: String,
 }
 
+#[cfg(feature = "encryptor")]
 impl From<String> for PrivateKeyEncrypted {
     fn from(value: String) -> Self {
         Self { value }
     }
 }
 
+#[cfg(feature = "encryptor")]
 impl PrivateKeyEncrypted {
     pub fn decrypt(&self, config: &EncryptionConfig) -> Result<PrivateKey> {
         let encryptor = Encryptor::new(config);
@@ -173,34 +179,3 @@ impl std::fmt::Display for TransactionHash {
         write!(f, "{}", self.value)
     }
 }
-
-// use std::fmt::Display;
-//
-// use common::encryptor::{EncryptionConfig, Encryptor};
-// use eyre::Result;
-//
-//
-//
-
-//
-// #[derive(Debug, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
-// pub struct TransactionHash(pub String);
-//
-// impl Display for TransactionHash {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         write!(f, "{}", self.0)
-//     }
-// }
-//
-// impl From<String> for TransactionHash {
-//     fn from(value: String) -> Self {
-//         Self(value)
-//     }
-// }
-//
-// impl From<&str> for TransactionHash {
-//     fn from(value: &str) -> Self {
-//         Self(value.to_string())
-//     }
-// }
-//

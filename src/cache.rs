@@ -1,6 +1,7 @@
-use std::collections::HashMap;
 use std::future::Future;
 use std::sync::Arc;
+use std::time::Instant;
+use std::{collections::HashMap, time::Duration};
 
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
@@ -8,7 +9,7 @@ use tokio::sync::RwLock;
 #[derive(Debug, Clone)]
 pub struct Data {
     pub value: String,
-    pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub expires_at: Option<Instant>,
 }
 
 #[derive(Debug, Clone)]
@@ -16,7 +17,7 @@ pub struct Cache {
     storage: Arc<RwLock<HashMap<String, Data>>>,
 }
 
-const DEFAULT_TTL: chrono::Duration = chrono::Duration::hours(1);
+const DEFAULT_TTL: Duration = Duration::from_secs(60 * 60);
 
 impl Default for Cache {
     fn default() -> Self {
@@ -41,7 +42,7 @@ impl Cache {
         let storage = self.storage.read().await;
         let data = storage.get(&key)?;
         if let Some(expires_at) = data.expires_at {
-            if expires_at < chrono::Utc::now() {
+            if expires_at < Instant::now() {
                 return None;
             }
         }
@@ -54,7 +55,7 @@ impl Cache {
         &self,
         key: &K,
         value: V,
-        expires_in: Option<chrono::Duration>,
+        expires_in: Option<Duration>,
     ) -> Option<V> {
         let key = serde_json::to_string(key).ok()?;
         let value_json = serde_json::to_string(&value).ok()?;
@@ -66,7 +67,7 @@ impl Cache {
             key.clone(),
             Data {
                 value: value_json,
-                expires_at: expires_in.map(|expires_in| chrono::Utc::now() + expires_in),
+                expires_at: expires_in.map(|expires_in| Instant::now() + expires_in),
             },
         );
 
@@ -75,7 +76,7 @@ impl Cache {
         if let Some(expires_in) = expires_in {
             let storage = self.storage.clone();
             tokio::spawn(async move {
-                tokio::time::sleep(expires_in.to_std().unwrap()).await;
+                tokio::time::sleep(expires_in).await;
                 let mut storage = storage.write().await;
                 storage.remove(&key);
             });
@@ -88,7 +89,7 @@ impl Cache {
         &self,
         action_fn: F,
         key: K,
-        expires_in: Option<chrono::Duration>,
+        expires_in: Option<Duration>,
     ) -> Result<V, E>
     where
         K: Serialize + std::fmt::Debug,
@@ -98,7 +99,9 @@ impl Cache {
     {
         let data: Option<V> = self.get(&key).await;
         if let Some(data) = data {
+            #[cfg(feature = "log")]
             log::debug!("[cache] cache hit key={key:?}");
+
             return Ok(data);
         }
 
@@ -109,6 +112,8 @@ impl Cache {
                     .set(&key, value, expires_in)
                     .await
                     .expect("failed to set cache");
+
+                #[cfg(feature = "log")]
                 log::debug!("[cache] new entry key={key:?}");
 
                 Ok(value)

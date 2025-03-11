@@ -1,38 +1,53 @@
 [package]
-name = "common"
-version = "0.1.4"
+name = "solar"
+version = "1.0.0"
 edition = "2024"
 
 [features]
+default = ["cache", "rate_limited", "encryptor", "solana", "axum", "price"]
+
+rate_limited = ["dep:tokio"]
+cache = ["dep:tokio"]
+encryptor = ["dep:base64", "dep:rand", "dep:sha2", "dep:aes-gcm"]
+solana = ["dep:solana-client", "dep:solana-sdk", "dep:spl-token"]
 axum = ["dep:axum", "dep:utoipa"]
-# price = ["dep:solana-client", "dep:solana-sdk", "dep:spl-token"]
+price = [
+  "dep:solana-client",
+  "dep:solana-sdk",
+  "dep:spl-token",
+  "dep:tokio",
+  "dep:tokio-util",
+  "dep:thiserror",
+  "dep:async-trait",
+]
+
+log = ["dep:log"]
 
 [dependencies]
 eyre = { version = "0.6.12" }
-thiserror = "1"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-lazy_static = { version = "1.5.0" }
-async-trait = "0.1.74"
-tokio = { version = "1", features = ["full"] }
-tokio-util = { version = "0.7.4", features = ["rt"] }
-log = { version = "0.4.26", features = ["kv"] }
-chrono = { version = "0.4.26", features = ["serde"] }
 readonly = "0"
-uuid = { version = "1.14.0", features = ["v4", "serde"] }
-aes-gcm = "0.10.3"
-sha2 = "0.10"
-rand = "0.8.5"
-base64 = "0.22.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
 
-# axum
+log = { version = "0.4.26", features = ["kv"], optional = true }
+
+thiserror = { version = "1", optional = true }
+tokio-util = { version = "0.7.4", features = ["rt"], optional = true }
+async-trait = { version = "0.1.74", optional = true }
+
+tokio = { version = "1", features = ["full"], optional = true }
+
+aes-gcm = { version = "0.10.3", optional = true }
+sha2 = { version = "0.10", optional = true }
+rand = { version = "0.8.5", optional = true }
+base64 = { version = "0.22.1", optional = true }
+
+spl-token = { version = "7", features = ["no-entrypoint"], optional = true }
+solana-client = { version = "2.1.15", optional = true }
+solana-sdk = { version = "2.1.15", optional = true }
+
 axum = { version = "0.8.1", features = ["macros"], optional = true }
 utoipa = { version = "5.3.1", features = [
   "axum_extras",
   "uuid",
 ], optional = true }
-
-# price
-spl-token = { version = "7", features = ["no-entrypoint"] }
-solana-client = { version = "2.1.15" }
-solana-sdk = { version = "2.1.15" }

@@ -5152,6 +5152,7 @@ dependencies = [
  "base64 0.22.1",
  "eyre",
  "log",
+ "num-bigint 0.4.6",
  "rand 0.8.5",
  "readonly",
  "serde",

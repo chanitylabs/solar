@@ -136,7 +136,7 @@ macro_rules! sqlx_ctx {
         let (trx, _) = $self.trx_factory.extract_or_create_trx($ctx).await?;
         let mut trx = trx.lock().await;
         let Some(trx) = trx.as_mut() else {
-            return Err(eyre::eyre!("failed to get sqlx trx"));
+            return Err(eyre::eyre!("failed to get sqlx trx")).into();
         };
         Ok(trx)
     }};

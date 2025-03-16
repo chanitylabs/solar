@@ -25,7 +25,7 @@ pub enum TrxFactoryError {
 }
 
 pub trait TrxFactory: Send + Sync + 'static {
-    async fn begin<'a, F, Fut, D, E>(&self, f: F) -> Result<D, E>
+    async fn begin<'a, D, E, F, Fut>(&self, f: F) -> Result<D, E>
     where
         Fut: Future<Output = Result<D, E>>,
         F: FnOnce(TrxContext) -> Fut + Send + 'a,
@@ -107,7 +107,7 @@ impl SqlxTrxFactory {
 }
 
 impl TrxFactory for SqlxTrxFactory {
-    async fn begin<'a, F, Fut, D, E>(&self, f: F) -> Result<D, E>
+    async fn begin<'a, D, E, F, Fut>(&self, f: F) -> Result<D, E>
     where
         F: FnOnce(TrxContext) -> Fut + Send + 'a,
         Fut: Future<Output = Result<D, E>>,
@@ -128,13 +128,4 @@ impl TrxFactory for SqlxTrxFactory {
             }
         }
     }
-}
-
-#[macro_export]
-macro_rules! sqlx_ctx {
-    ($self:ident, $ctx:ident) => {{
-        let (trx, _) = $self.trx_factory.extract_or_create_trx($ctx).await?;
-        let mut trx = trx.lock().await;
-        trx.as_mut()
-    }};
 }

@@ -132,12 +132,12 @@ impl TrxFactory for SqlxTrxFactory {
 
 #[macro_export]
 macro_rules! sqlx_ctx {
-    ($self:ident, $ctx:ident) => {
-        let (trx, _) = $self.trx_factory.extract_or_create_trx($ctx).await?;
-        let mut trx = trx.lock().await;
-        let Some(trx) = trx.as_mut() else {
-            return Err(PersistenceError::InternalError(eyre::eyre!(
-                "failed to get sqlx transaction"
+    ($self:ident, $ctx:ident, $trx_var:ident) => {
+        let ($trx_var, _) = $self.trx_factory.extract_or_create_trx($ctx).await?;
+        let mut $trx_var = $trx_var.lock().await;
+        let Some($trx_var) = $trx_var.as_mut() else {
+            return Err(TrxFactoryError::InternalError(eyre::eyre!(
+                "transaction already committed"
             )));
         };
     };

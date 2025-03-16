@@ -4,7 +4,15 @@ version = "1.0.0"
 edition = "2024"
 
 [features]
-default = ["cache", "rate_limited", "encryptor", "solana", "axum", "price"]
+default = [
+  "cache",
+  "rate_limited",
+  "encryptor",
+  "solana",
+  "axum",
+  "price",
+  "trx_factory",
+]
 
 rate_limited = ["dep:tokio"]
 cache = ["dep:tokio"]
@@ -20,6 +28,7 @@ price = [
   "dep:thiserror",
   "dep:async-trait",
 ]
+trx_factory = ["dep:tokio", "dep:sqlx"]
 
 log = ["dep:log"]
 
@@ -51,4 +60,9 @@ axum = { version = "0.8.1", features = ["macros"], optional = true }
 utoipa = { version = "5.3.1", features = [
   "axum_extras",
   "uuid",
+], optional = true }
+
+sqlx = { version = "0.8", features = [
+  "runtime-tokio",
+  "postgres",
 ], optional = true }

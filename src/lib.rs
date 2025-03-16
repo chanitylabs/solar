@@ -1,3 +1,5 @@
+#![allow(async_fn_in_trait)]
+
 #[cfg(feature = "axum")]
 pub mod axum;
 #[cfg(feature = "cache")]
@@ -10,6 +12,8 @@ pub mod price;
 pub mod rate_limited;
 #[cfg(feature = "solana")]
 pub mod solana;
+#[cfg(feature = "trx_factory")]
+pub mod trx_factory;
 
 pub mod consts;
 pub mod entity;

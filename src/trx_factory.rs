@@ -42,6 +42,10 @@ impl SqlxTrxFactory {
         Self { pool }
     }
 
+    pub fn pool(&self) -> &PgPool {
+        &self.pool
+    }
+
     pub async fn extract_or_create_trx(
         &self,
         ctx: TrxContext,

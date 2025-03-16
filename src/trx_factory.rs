@@ -24,12 +24,14 @@ pub enum TrxFactoryError {
     RollbackTransactionFailed(#[source] eyre::Error),
 }
 
+#[async_trait::async_trait]
 pub trait TrxFactory: Send + Sync + 'static {
     async fn begin<'a, D, E, F, Fut>(&self, f: F) -> Result<D, E>
     where
-        Fut: Future<Output = Result<D, E>>,
+        D: Send + 'a,
         F: FnOnce(TrxContext) -> Fut + Send + 'a,
-        E: From<TrxFactoryError>;
+        Fut: Future<Output = Result<D, E>> + Send,
+        E: From<TrxFactoryError> + Send;
 }
 
 #[derive(Clone)]
@@ -110,12 +112,14 @@ impl SqlxTrxFactory {
     }
 }
 
+#[async_trait::async_trait]
 impl TrxFactory for SqlxTrxFactory {
     async fn begin<'a, D, E, F, Fut>(&self, f: F) -> Result<D, E>
     where
+        D: Send + 'a,
         F: FnOnce(TrxContext) -> Fut + Send + 'a,
-        Fut: Future<Output = Result<D, E>>,
-        E: From<TrxFactoryError>,
+        Fut: Future<Output = Result<D, E>> + Send,
+        E: From<TrxFactoryError> + Send,
     {
         let (ctx, sqlx_tx) = Self::create_ctx(self.pool.clone()).await?;
 

@@ -4,8 +4,12 @@ use eyre::{Context, eyre};
 use num_bigint::BigInt;
 use rand::Rng;
 
-pub fn parse_bn(bn: u64, decimals: u8) -> f64 {
+pub fn from_u64(bn: u64, decimals: u8) -> f64 {
     bn as f64 / 10u64.pow(decimals as u32) as f64
+}
+
+pub fn to_u64(bn: f64, decimals: u8) -> u64 {
+    (bn * 10u64.pow(decimals as u32) as f64) as u64
 }
 
 pub fn parse_units(value: &str, decimals: u8) -> eyre::Result<BigInt> {

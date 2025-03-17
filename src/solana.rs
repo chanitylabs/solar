@@ -1,3 +1,4 @@
+use num_bigint::BigInt;
 use solana_sdk::bs58;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
@@ -17,4 +18,12 @@ pub fn from_private_key(private_key: &PrivateKey) -> Result<Keypair> {
         .into_vec()
         .context("invalid base58 private key encoding")?;
     Keypair::from_bytes(bytes.as_ref()).context("invalid private key")
+}
+
+pub fn from_bigint(bn: &BigInt) -> Result<u64> {
+    bn.try_into().context("invalid big integer")
+}
+
+pub fn to_bigint(n: u64) -> BigInt {
+    BigInt::from(n)
 }

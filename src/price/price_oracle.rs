@@ -8,7 +8,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::{
     consts::{SOL_DECIMALS, SOL_USDC_POOL_SOL_VAULT, SOL_USDC_POOL_USDC_VAULT, USDC_DECIMALS},
-    tool::parse_bn,
+    tool::from_u64,
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -125,8 +125,8 @@ impl NativePriceOracle {
         let usdc_token_account = Account::unpack(&usdc_token_account.data)
             .context("failed to unpack USDC vault account")?;
 
-        let sol_balance = parse_bn(sol_token_account.amount, SOL_DECIMALS);
-        let usdc_balance = parse_bn(usdc_token_account.amount, USDC_DECIMALS);
+        let sol_balance = from_u64(sol_token_account.amount, SOL_DECIMALS);
+        let usdc_balance = from_u64(usdc_token_account.amount, USDC_DECIMALS);
         let price = usdc_balance / sol_balance;
 
         Ok(price)

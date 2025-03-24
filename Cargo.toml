@@ -17,7 +17,7 @@ default = [
 rate_limited = ["dep:tokio"]
 cache = ["dep:tokio"]
 encryptor = ["dep:base64", "dep:rand", "dep:sha2", "dep:aes-gcm"]
-solana = ["dep:solana-client", "dep:solana-sdk", "dep:spl-token"]
+solana = ["dep:solana-client", "dep:solana-sdk", "dep:spl-token", "dep:spl-associated-token-account"]
 axum = ["dep:axum", "dep:utoipa"]
 price = [
   "dep:solana-client",
@@ -55,6 +55,9 @@ base64 = { version = "0.22.1", optional = true }
 spl-token = { version = "7", features = ["no-entrypoint"], optional = true }
 solana-client = { version = "2.1.15", optional = true }
 solana-sdk = { version = "2.1.15", optional = true }
+spl-associated-token-account = { version = "6.0.0", features = [
+  "no-entrypoint",
+], optional = true }
 
 axum = { version = "0.8.1", features = ["macros"], optional = true }
 utoipa = { version = "5.3.1", features = [
@@ -66,3 +69,4 @@ sqlx = { version = "0.8", features = [
   "runtime-tokio",
   "postgres",
 ], optional = true }
+

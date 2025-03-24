@@ -7,7 +7,10 @@ use tokio::sync::RwLock;
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-    consts::{SOL_DECIMALS, SOL_USDC_POOL_SOL_VAULT, SOL_USDC_POOL_USDC_VAULT, USDC_DECIMALS},
+    consts::{
+        accounts::{SOL_USDC_POOL_SOL_VAULT, SOL_USDC_POOL_USDC_VAULT},
+        tokens::{USDC_DECIMALS, WSOL_DECIMALS},
+    },
     tool::from_u64,
 };
 
@@ -125,7 +128,7 @@ impl NativePriceOracle {
         let usdc_token_account = Account::unpack(&usdc_token_account.data)
             .context("failed to unpack USDC vault account")?;
 
-        let sol_balance = from_u64(sol_token_account.amount, SOL_DECIMALS);
+        let sol_balance = from_u64(sol_token_account.amount, WSOL_DECIMALS);
         let usdc_balance = from_u64(usdc_token_account.amount, USDC_DECIMALS);
         let price = usdc_balance / sol_balance;
 

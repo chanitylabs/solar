@@ -1,15 +1,18 @@
+use std::sync::Arc;
+use std::time::Duration;
+
 use eyre::Context;
 use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::{program_pack::Pack, pubkey::Pubkey};
+use solana_sdk::program_pack::Pack;
+use solana_sdk::pubkey::Pubkey;
 use spl_token::state::Account;
-use std::{sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 use tokio_util::sync::CancellationToken;
 
-use crate::{
-    consts::{SOL_DECIMALS, SOL_USDC_POOL_SOL_VAULT, SOL_USDC_POOL_USDC_VAULT, USDC_DECIMALS},
-    tool::from_u64,
+use crate::consts::{
+    SOL_DECIMALS, SOL_USDC_POOL_SOL_VAULT, SOL_USDC_POOL_USDC_VAULT, USDC_DECIMALS,
 };
+use crate::tool::from_u64;
 
 #[derive(thiserror::Error, Debug)]
 pub enum PriceOracleError {

@@ -1,7 +1,7 @@
+use eyre::Result;
+
 #[cfg(feature = "encryptor")]
 use crate::encryptor::{EncryptionConfig, Encryptor};
-
-use eyre::Result;
 
 #[derive(Debug, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize, Hash, Copy)]
 #[cfg_attr(feature = "axum", derive(utoipa::ToSchema))]

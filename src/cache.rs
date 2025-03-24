@@ -1,7 +1,7 @@
+use std::collections::HashMap;
 use std::future::Future;
 use std::sync::Arc;
-use std::time::Instant;
-use std::{collections::HashMap, time::Duration};
+use std::time::{Duration, Instant};
 
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;

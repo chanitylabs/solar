@@ -3,7 +3,8 @@ use std::str::FromStr;
 use eyre::Result;
 use solana_sdk::pubkey::Pubkey;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Hash, Eq, PartialEq)]
+#[serde(transparent)]
 #[readonly::make]
 pub struct Address {
     pubkey: Pubkey,
@@ -31,7 +32,7 @@ impl Address {
 
 impl std::fmt::Display for Address {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.pubkey.to_string())
+        write!(f, "{}", self.pubkey)
     }
 }
 
@@ -63,26 +64,5 @@ impl FromStr for Address {
 impl From<Pubkey> for Address {
     fn from(pubkey: Pubkey) -> Self {
         Self::from_pubkey(pubkey)
-    }
-}
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Hash, Eq, PartialEq)]
-#[cfg_attr(feature = "axum", derive(utoipa::ToSchema))]
-#[serde(transparent)]
-#[readonly::make]
-pub struct AddressJson(String);
-
-impl Into<AddressJson> for Address {
-    fn into(self) -> AddressJson {
-        AddressJson(self.pubkey.to_string())
-    }
-}
-
-impl TryFrom<AddressJson> for Address {
-    type Error = eyre::Error;
-
-    fn try_from(value: AddressJson) -> Result<Self, Self::Error> {
-        let pubkey = Pubkey::from_str(&value.0)?;
-        Ok(Self { pubkey })
     }
 }

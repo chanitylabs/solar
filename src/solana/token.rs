@@ -2,7 +2,7 @@ use solana_sdk::pubkey::Pubkey;
 
 use crate::{
     consts::tokens::{USDC_PUBKEY, USDT_PUBKEY, WSOL_ADDRESS, WSOL_DECIMALS, WSOL_PUBKEY},
-    tool::{format_units, from_u64, to_u64},
+    tool::{from_u64, to_u64},
 };
 
 use super::address::Address;
@@ -13,14 +13,15 @@ pub enum TokenError {
     UnsupportedToken(Address),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
 pub enum TokenKind {
     Native,
     SplToken,
     Token2022,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize, PartialEq, Eq)]
 pub struct Token {
     address: Address,
     decimals: u8,
@@ -30,9 +31,9 @@ pub struct Token {
 impl std::fmt::Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.kind {
-            TokenKind::Native => write!(f, "Native({})", self.address.to_string()),
-            TokenKind::SplToken => write!(f, "SplToken({})", self.address.to_string()),
-            TokenKind::Token2022 => write!(f, "Token2022({})", self.address.to_string()),
+            TokenKind::Native => write!(f, "Native({})", self.address),
+            TokenKind::SplToken => write!(f, "SplToken({})", self.address),
+            TokenKind::Token2022 => write!(f, "Token2022({})", self.address),
         }
     }
 }
@@ -42,6 +43,7 @@ impl Token {
         let cloned = self.clone();
         Self { decimals, ..cloned }
     }
+
     pub fn native() -> Self {
         Self {
             decimals: WSOL_DECIMALS,
@@ -64,6 +66,10 @@ impl Token {
             kind: TokenKind::Token2022,
             address: address.clone(),
         }
+    }
+
+    pub fn decimals(&self) -> u8 {
+        self.decimals
     }
 
     pub fn address(&self) -> &Address {
@@ -98,7 +104,7 @@ impl Token {
     }
 
     pub fn is_native(&self) -> bool {
-        matches!(self.kind, TokenKind::Native)
+        matches!(self.kind, TokenKind::Native) || self.pubkey() == &WSOL_PUBKEY
     }
 
     pub fn is_quote(&self) -> bool {

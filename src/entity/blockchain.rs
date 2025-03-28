@@ -98,6 +98,15 @@ impl From<&str> for Address {
     }
 }
 
+#[cfg(feature = "solana")]
+impl From<&Pubkey> for Address {
+    fn from(value: &Pubkey) -> Self {
+        Self {
+            value: value.to_string(),
+        }
+    }
+}
+
 impl Address {
     #[cfg(feature = "solana")]
     pub fn pubkey(&self) -> eyre::Result<Pubkey> {
@@ -125,6 +134,15 @@ impl From<&str> for PrivateKey {
     }
 }
 
+#[cfg(feature = "solana")]
+impl From<&Keypair> for PrivateKey {
+    fn from(value: &Keypair) -> Self {
+        Self {
+            value: value.to_base58_string(),
+        }
+    }
+}
+
 impl std::fmt::Display for PrivateKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
@@ -141,7 +159,10 @@ impl PrivateKey {
 
     #[cfg(feature = "solana")]
     pub fn keypair(&self) -> eyre::Result<Keypair> {
-        Ok(Keypair::from_base58_string(&self.value))
+        let bytes = bs58::decode(&self.value)
+            .into_vec()
+            .context("invalid base58 private key encoding")?;
+        Keypair::from_bytes(bytes.as_ref()).context("invalid private key")
     }
 
     #[cfg(feature = "solana")]

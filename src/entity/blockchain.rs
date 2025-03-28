@@ -159,6 +159,8 @@ impl PrivateKey {
 
     #[cfg(feature = "solana")]
     pub fn keypair(&self) -> eyre::Result<Keypair> {
+        use solana_sdk::bs58;
+
         let bytes = bs58::decode(&self.value)
             .into_vec()
             .context("invalid base58 private key encoding")?;

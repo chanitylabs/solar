@@ -53,7 +53,9 @@ impl<T> RateLimitedClient<T> {
         }
     }
 
-    pub fn disable_limit(&mut self) {}
+    pub fn disable_limit(&mut self) {
+        self.disable_limit = true;
+    }
 
     pub async fn call<F, Fut, R>(&self, func: F) -> R
     where

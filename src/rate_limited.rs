@@ -31,6 +31,7 @@ use tokio::time::{Duration, sleep};
 pub struct RateLimitedClient<T> {
     client: Arc<T>,
     semaphore: Arc<Semaphore>,
+    disable_limit: bool,
 }
 
 impl<T> Clone for RateLimitedClient<T> {
@@ -38,6 +39,7 @@ impl<T> Clone for RateLimitedClient<T> {
         Self {
             client: Arc::clone(&self.client),
             semaphore: Arc::clone(&self.semaphore),
+            disable_limit: self.disable_limit,
         }
     }
 }
@@ -47,25 +49,33 @@ impl<T> RateLimitedClient<T> {
         Self {
             client: Arc::new(client),
             semaphore: Arc::new(Semaphore::new(max_concurrent)),
+            disable_limit: false,
         }
     }
+
+    pub fn disable_limit(&mut self) {}
 
     pub async fn call<F, Fut, R>(&self, func: F) -> R
     where
         F: FnOnce(Arc<T>) -> Fut,
         Fut: std::future::Future<Output = R>,
     {
-        let permit = self.semaphore.clone().acquire_owned().await.unwrap();
-        let client = Arc::clone(&self.client);
+        if !self.disable_limit {
+            let permit = self.semaphore.clone().acquire_owned().await.unwrap();
 
-        let result = func(client).await;
+            let client = Arc::clone(&self.client);
+            let result = func(client).await;
 
-        // Delay release of semaphore
-        tokio::spawn(async move {
-            sleep(Duration::from_secs(1)).await;
-            drop(permit);
-        });
+            // Delay release of semaphore
+            tokio::spawn(async move {
+                sleep(Duration::from_secs(1)).await;
+                drop(permit);
+            });
 
-        result
+            result
+        } else {
+            let client = Arc::clone(&self.client);
+            func(client).await
+        }
     }
 }

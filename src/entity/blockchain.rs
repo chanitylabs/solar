@@ -1,4 +1,7 @@
-use eyre::Result;
+use std::str::FromStr;
+
+use eyre::{Context, Result};
+use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer};
 
 #[cfg(feature = "encryptor")]
 use crate::encryptor::{EncryptionConfig, Encryptor};
@@ -95,6 +98,13 @@ impl From<&str> for Address {
     }
 }
 
+impl Address {
+    #[cfg(feature = "solana")]
+    pub fn pubkey(&self) -> eyre::Result<Pubkey> {
+        Pubkey::from_str(&self.value).context("failed to parse pubkey")
+    }
+}
+
 #[derive(Debug, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(feature = "axum", derive(utoipa::ToSchema))]
 pub struct PrivateKey {
@@ -127,6 +137,16 @@ impl PrivateKey {
         let encryptor = Encryptor::new(config);
         let encrypted = encryptor.encrypt(&self.value)?;
         Ok(PrivateKeyEncrypted { value: encrypted })
+    }
+
+    #[cfg(feature = "solana")]
+    pub fn keypair(&self) -> eyre::Result<Keypair> {
+        Ok(Keypair::from_base58_string(&self.value))
+    }
+
+    #[cfg(feature = "solana")]
+    pub fn pubkey(&self) -> eyre::Result<Pubkey> {
+        Ok(self.keypair()?.pubkey())
     }
 }
 

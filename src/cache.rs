@@ -13,19 +13,19 @@ pub struct Data {
 }
 
 #[derive(Debug, Clone)]
-pub struct Cache {
+pub struct MemCache {
     storage: Arc<RwLock<HashMap<String, Data>>>,
 }
 
 const DEFAULT_TTL: Duration = Duration::from_secs(60 * 60);
 
-impl Default for Cache {
+impl Default for MemCache {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Cache {
+impl MemCache {
     pub fn new() -> Self {
         Self {
             storage: Arc::new(RwLock::new(HashMap::new())),

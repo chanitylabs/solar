@@ -41,12 +41,12 @@ pub enum Dex {
     Pumpfun,
     PumpAMM,
     // Raydium
-    RaydiumAMM,
-    RaydiumCLMM,
-    RaydiumCPMM,
+    RaydiumAmm,
+    RaydiumClmm,
+    RaydiumCpmm,
     // Meteora
-    MeteoraDLMM,
-    MeteoraDAMM,
+    MeteoraDlmm,
+    MeteoraDamm,
 }
 
 impl Dex {
@@ -55,12 +55,12 @@ impl Dex {
             Dex::Pumpfun => "Pumpfun".to_string(),
             Dex::PumpAMM => "Pump.fun AMM".to_string(),
 
-            Dex::RaydiumAMM => "Raydium AMM".to_string(),
-            Dex::RaydiumCLMM => "Raydium CLMM".to_string(),
-            Dex::RaydiumCPMM => "Raydium CPMM".to_string(),
+            Dex::RaydiumAmm => "Raydium AMM".to_string(),
+            Dex::RaydiumClmm => "Raydium CLMM".to_string(),
+            Dex::RaydiumCpmm => "Raydium CPMM".to_string(),
 
-            Dex::MeteoraDLMM => "Meteora DLMM".to_string(),
-            Dex::MeteoraDAMM => "Meteora DAMM".to_string(),
+            Dex::MeteoraDlmm => "Meteora DLMM".to_string(),
+            Dex::MeteoraDamm => "Meteora DAMM".to_string(),
         }
     }
 }

@@ -37,15 +37,30 @@ impl std::fmt::Display for Chain {
 #[cfg_attr(feature = "axum", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum Dex {
-    RaydiumAmm,
+    // Pump.fun
     Pumpfun,
+    PumpAMM,
+    // Raydium
+    RaydiumAMM,
+    RaydiumCLMM,
+    RaydiumCPMM,
+    // Meteora
+    MeteoraDLMM,
+    MeteoraDAMM,
 }
 
 impl Dex {
     pub fn to_label(&self) -> String {
         match self {
-            Dex::RaydiumAmm => "Raydium AMM".to_string(),
             Dex::Pumpfun => "Pumpfun".to_string(),
+            Dex::PumpAMM => "Pump.fun AMM".to_string(),
+
+            Dex::RaydiumAMM => "Raydium AMM".to_string(),
+            Dex::RaydiumCLMM => "Raydium CLMM".to_string(),
+            Dex::RaydiumCPMM => "Raydium CPMM".to_string(),
+
+            Dex::MeteoraDLMM => "Meteora DLMM".to_string(),
+            Dex::MeteoraDAMM => "Meteora DAMM".to_string(),
         }
     }
 }

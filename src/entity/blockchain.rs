@@ -39,7 +39,7 @@ impl std::fmt::Display for Chain {
 pub enum Dex {
     // Pump.fun
     Pumpfun,
-    PumpAMM,
+    PumpAmm,
     // Raydium
     RaydiumAmm,
     RaydiumClmm,
@@ -53,7 +53,7 @@ impl Dex {
     pub fn to_label(&self) -> String {
         match self {
             Dex::Pumpfun => "Pumpfun".to_string(),
-            Dex::PumpAMM => "Pump.fun AMM".to_string(),
+            Dex::PumpAmm => "Pump.fun AMM".to_string(),
 
             Dex::RaydiumAmm => "Raydium AMM".to_string(),
             Dex::RaydiumClmm => "Raydium CLMM".to_string(),
